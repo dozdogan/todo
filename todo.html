@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yapılacaklar</title>
+<style>
+  :root {
+    --bg: #f4f1ec;
+    --card: #ffffff;
+    --text: #2b2a28;
+    --muted: #8a867f;
+    --line: #e6e1d8;
+    --accent: #d9622b;
+    --done: #b5b0a7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1b19;
+      --card: #262522;
+      --text: #ece8e1;
+      --muted: #8f8a82;
+      --line: #36342f;
+      --accent: #f07a42;
+      --done: #6b6760;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 48px 16px;
+  }
+  main { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+  form { display: flex; gap: 8px; margin-bottom: 16px; }
+  input[type=text] {
+    flex: 1;
+    padding: 12px 14px;
+    font: inherit;
+    color: inherit;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: var(--accent); }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+  }
+  .add {
+    padding: 0 18px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .filters {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .filters button {
+    padding: 4px 12px;
+    border-radius: 999px;
+    color: var(--muted);
+  }
+  .filters button.on { background: var(--card); color: var(--text); box-shadow: 0 0 0 1px var(--line); }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  li:last-child { border-bottom: none; }
+  li input[type=checkbox] {
+    width: 20px; height: 20px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  li .text { flex: 1; word-break: break-word; cursor: text; }
+  li.done .text { color: var(--done); text-decoration: line-through; }
+  li .edit { flex: 1; padding: 4px 8px; }
+  li .del {
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 6px;
+    opacity: 0;
+  }
+  li:hover .del, li .del:focus { opacity: 1; }
+  li .del:hover { color: var(--accent); }
+  @media (hover: none) { li .del { opacity: 1; } }
+  .empty { padding: 32px; text-align: center; color: var(--muted); }
+  footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  footer button { color: var(--muted); }
+  footer button:hover { color: var(--accent); }
+  .status { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: #fbe3d6; color: #8a3210; font-size: 14px; }
+  .hint { margin-top: 24px; font-size: 13px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Yapılacaklar</h1>
+  <p class="sub" id="date"></p>
+
+  <form id="form">
+    <input type="text" id="input" placeholder="Yeni görev ekle…" autocomplete="off" autofocus>
+    <button class="add" type="submit">Ekle</button>
+  </form>
+
+  <div class="filters" id="filters">
+    <button data-f="all" class="on">Tümü</button>
+    <button data-f="active">Yapılacak</button>
+    <button data-f="done">Tamamlanan</button>
+  </div>
+
+  <p class="status" id="status" hidden></p>
+
+  <ul id="list"></ul>
+
+  <footer>
+    <span id="count"></span>
+    <button id="clear">Tamamlananları sil</button>
+  </footer>
+
+  <p class="hint">Düzenlemek için göreve çift tıkla. Görevler Supabase'de saklanır.</p>
+</main>
+
+<script>
+  const SUPABASE_URL = "https://kqklosaelkpmhhwldmfb.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_G6ApdS5dAq9qBWYiKaBUfw_K8iHbU1d";
+  const OLD_KEY = "todo-items";
+
+  let items = [];
+  let filter = "all";
+  let loaded = false;
+
+  const $ = (id) => document.getElementById(id);
+  const list = $("list");
+
+  $("date").textContent = new Date().toLocaleDateString("tr-TR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric"
+  });
+
+  async function api(method, query = "", body) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/todos${query}`, {
+      method,
+      headers: {
+        apikey: SUPABASE_KEY,
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.status === 204 ? null : res.json();
+  }
+
+  function showError(err) {
+    console.error(err);
+    $("status").textContent = "Supabase'e bağlanılamadı. İnternet bağlantını kontrol edip sayfayı yenile.";
+    $("status").hidden = false;
+  }
+
+  async function run(fn) {
+    try { await fn(); $("status").hidden = true; }
+    catch (err) { showError(err); }
+    render();
+  }
+
+  // İlk sürümde tarayıcıya kaydedilen görevleri bir kez Supabase'e taşı.
+  async function migrateOld() {
+    let old = [];
+    try { old = JSON.parse(localStorage.getItem(OLD_KEY)) || []; } catch {}
+    if (!old.length) return;
+    await api("POST", "", old.map(i => ({ text: i.text, done: !!i.done })));
+    try { localStorage.removeItem(OLD_KEY); } catch {}
+  }
+
+  async function loadAll() {
+    await migrateOld();
+    items = await api("GET", "?select=*&order=created_at.asc,id.asc");
+    loaded = true;
+  }
+
+  async function addItem(text) {
+    const [row] = await api("POST", "", { text });
+    items.push(row);
+  }
+
+  async function updateItem(item, fields) {
+    await api("PATCH", `?id=eq.${item.id}`, fields);
+    Object.assign(item, fields);
+  }
+
+  async function deleteItem(item) {
+    await api("DELETE", `?id=eq.${item.id}`);
+    items = items.filter(i => i !== item);
+  }
+
+  function render() {
+    list.innerHTML = "";
+    const shown = items.filter(i =>
+      filter === "all" ? true : filter === "done" ? i.done : !i.done
+    );
+
+    if (shown.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = !loaded ? "Yükleniyor…"
+        : items.length ? "Bu filtrede görev yok."
+        : "Henüz görev yok. Yukarıdan ekleyebilirsin.";
+      list.appendChild(li);
+    }
+
+    for (const item of shown) {
+      const li = document.createElement("li");
+      if (item.done) li.classList.add("done");
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = item.done;
+      cb.onchange = () => run(() => updateItem(item, { done: cb.checked }));
+
+      const span = document.createElement("span");
+      span.className = "text";
+      span.textContent = item.text;
+      span.ondblclick = () => startEdit(li, span, item);
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.title = "Sil";
+      del.textContent = "×";
+      del.onclick = () => run(() => deleteItem(item));
+
+      li.append(cb, span, del);
+      list.appendChild(li);
+    }
+
+    const left = items.filter(i => !i.done).length;
+    $("count").textContent = loaded ? `${left} görev kaldı` : "";
+    $("clear").style.visibility = items.some(i => i.done) ? "visible" : "hidden";
+  }
+
+  function startEdit(li, span, item) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "edit";
+    input.value = item.text;
+    li.replaceChild(input, span);
+    input.focus();
+    input.select();
+
+    let finished = false;
+    const finish = (keep) => {
+      if (finished) return;
+      finished = true;
+      const v = input.value.trim();
+      if (!keep || v === item.text) return render();
+      run(() => v ? updateItem(item, { text: v }) : deleteItem(item));
+    };
+    input.onkeydown = (e) => {
+      if (e.key === "Enter") finish(true);
+      if (e.key === "Escape") finish(false);
+    };
+    input.onblur = () => finish(true);
+  }
+
+  $("form").onsubmit = (e) => {
+    e.preventDefault();
+    const v = $("input").value.trim();
+    if (!v) return;
+    $("input").value = "";
+    run(() => addItem(v));
+  };
+
+  $("filters").onclick = (e) => {
+    const f = e.target.dataset.f;
+    if (!f) return;
+    filter = f;
+    for (const b of $("filters").children) b.classList.toggle("on", b.dataset.f === f);
+    render();
+  };
+
+  $("clear").onclick = () => run(async () => {
+    await api("DELETE", "?done=eq.true");
+    items = items.filter(i => !i.done);
+  });
+
+  render();
+  run(loadAll);
+</script>
+</body>
+</html>

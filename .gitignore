@@ -1,0 +1,5 @@
+.supabase-db-password
+.DS_Store
+supabase/.temp/
+supabase/.branches/
+.env*
