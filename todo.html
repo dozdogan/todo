@@ -124,13 +124,50 @@
   footer button:hover { color: var(--accent); }
   .status { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: #fbe3d6; color: #8a3210; font-size: 14px; }
   .hint { margin-top: 24px; font-size: 13px; color: var(--muted); text-align: center; }
+  .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .user { font-size: 14px; color: var(--muted); white-space: nowrap; }
+  .user button { color: var(--muted); text-decoration: underline; padding: 0 0 0 6px; }
+  .user button:hover { color: var(--accent); }
+  .auth {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .auth label { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .auth input { width: 100%; }
+  .auth .add { padding: 12px; margin-top: 4px; }
+  .auth .switch { font-size: 14px; color: var(--muted); text-align: center; }
+  .auth .switch button { color: var(--accent); font-weight: 600; }
+  [hidden] { display: none !important; }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
 <main>
-  <h1>Yapılacaklar</h1>
+  <div class="top">
+    <h1>Yapılacaklar</h1>
+    <span class="user" id="user" hidden><span id="username"></span><button id="logout">Çıkış</button></span>
+  </div>
   <p class="sub" id="date"></p>
 
+  <p class="status" id="status" hidden></p>
+
+  <form class="auth" id="auth" hidden>
+    <label>Kullanıcı adı
+      <input type="text" id="auth-user" autocomplete="username" required>
+    </label>
+    <label>Şifre
+      <input type="password" id="auth-pass" autocomplete="current-password" required>
+    </label>
+    <button class="add" type="submit" id="auth-submit">Giriş yap</button>
+    <p class="switch"><span id="auth-q">Hesabın yok mu?</span> <button type="button" id="auth-toggle">Kayıt ol</button></p>
+  </form>
+
+  <div id="app" hidden>
   <form id="form">
     <input type="text" id="input" placeholder="Yeni görev ekle…" autocomplete="off" autofocus>
     <button class="add" type="submit">Ekle</button>
@@ -142,8 +179,6 @@
     <button data-f="done">Tamamlanan</button>
   </div>
 
-  <p class="status" id="status" hidden></p>
-
   <ul id="list"></ul>
 
   <footer>
@@ -151,13 +186,19 @@
     <button id="clear">Tamamlananları sil</button>
   </footer>
 
-  <p class="hint">Düzenlemek için göreve çift tıkla. Görevler Supabase'de saklanır.</p>
+  <p class="hint">Düzenlemek için göreve çift tıkla.</p>
+  </div>
 </main>
 
 <script>
   const SUPABASE_URL = "https://kqklosaelkpmhhwldmfb.supabase.co";
   const SUPABASE_KEY = "sb_publishable_G6ApdS5dAq9qBWYiKaBUfw_K8iHbU1d";
-  const OLD_KEY = "todo-items";
+  // Supabase giriş için e-posta ister; kullanıcı adını sahte bir adrese çeviriyoruz.
+  const EMAIL_DOMAIN = "todo.local";
+
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let token = null;
+  let signupMode = false;
 
   let items = [];
   let filter = "all";
@@ -175,6 +216,7 @@
       method,
       headers: {
         apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
         Prefer: "return=representation"
       },
@@ -184,11 +226,75 @@
     return res.status === 204 ? null : res.json();
   }
 
-  function showError(err) {
+  function showError(err, text) {
     console.error(err);
-    $("status").textContent = "Supabase'e bağlanılamadı. İnternet bağlantını kontrol edip sayfayı yenile.";
+    $("status").textContent = text || "Supabase'e bağlanılamadı. İnternet bağlantını kontrol edip sayfayı yenile.";
     $("status").hidden = false;
   }
+
+  // ---- Giriş ----
+
+  function setSignupMode(on) {
+    signupMode = on;
+    $("auth-submit").textContent = on ? "Kayıt ol" : "Giriş yap";
+    $("auth-q").textContent = on ? "Zaten hesabın var mı?" : "Hesabın yok mu?";
+    $("auth-toggle").textContent = on ? "Giriş yap" : "Kayıt ol";
+    $("auth-pass").autocomplete = on ? "new-password" : "current-password";
+    $("status").hidden = true;
+  }
+
+  function authMessage(error) {
+    const m = (error.message || "").toLowerCase();
+    if (m.includes("invalid login")) return "Kullanıcı adı ya da şifre yanlış.";
+    if (m.includes("already registered") || m.includes("already exists")) return "Bu kullanıcı adı alınmış.";
+    if (m.includes("password")) return "Şifre en az 8 karakter olmalı.";
+    if (m.includes("rate limit")) return "Çok fazla deneme yapıldı. Biraz bekleyip tekrar dene.";
+    return "Bir hata oldu: " + error.message;
+  }
+
+  $("auth-toggle").onclick = () => setSignupMode(!signupMode);
+
+  $("auth").onsubmit = async (e) => {
+    e.preventDefault();
+    const username = $("auth-user").value.trim().toLowerCase();
+    const password = $("auth-pass").value;
+    if (!/^[a-z0-9._-]{3,30}$/.test(username)) {
+      return showError(null, "Kullanıcı adı 3-30 karakter olmalı; sadece harf (Türkçe karakter olmadan), rakam, nokta, tire ve alt çizgi kullanılabilir.");
+    }
+    const creds = { email: `${username}@${EMAIL_DOMAIN}`, password };
+    $("auth-submit").disabled = true;
+    const { error } = signupMode
+      ? await sb.auth.signUp(creds)
+      : await sb.auth.signInWithPassword(creds);
+    $("auth-submit").disabled = false;
+    if (error) return showError(error, authMessage(error));
+    $("auth-pass").value = "";
+  };
+
+  $("logout").onclick = () => sb.auth.signOut();
+
+  let currentUser = null;
+  sb.auth.onAuthStateChange((event, session) => {
+    token = session?.access_token || null;
+    const user = session?.user || null;
+    $("auth").hidden = !!user;
+    $("app").hidden = !user;
+    $("user").hidden = !user;
+    if (!user) {
+      currentUser = null;
+      items = [];
+      loaded = false;
+      return;
+    }
+    $("username").textContent = user.email.split("@")[0];
+    // Token yenilenince listeyi baştan yüklemeye gerek yok.
+    if (currentUser === user.id) return;
+    currentUser = user.id;
+    $("status").hidden = true;
+    loaded = false;
+    render();
+    setTimeout(() => run(loadAll));
+  });
 
   async function run(fn) {
     try { await fn(); $("status").hidden = true; }
@@ -196,17 +302,7 @@
     render();
   }
 
-  // İlk sürümde tarayıcıya kaydedilen görevleri bir kez Supabase'e taşı.
-  async function migrateOld() {
-    let old = [];
-    try { old = JSON.parse(localStorage.getItem(OLD_KEY)) || []; } catch {}
-    if (!old.length) return;
-    await api("POST", "", old.map(i => ({ text: i.text, done: !!i.done })));
-    try { localStorage.removeItem(OLD_KEY); } catch {}
-  }
-
   async function loadAll() {
-    await migrateOld();
     items = await api("GET", "?select=*&order=created_at.asc,id.asc");
     loaded = true;
   }
@@ -316,7 +412,6 @@
   });
 
   render();
-  run(loadAll);
 </script>
 </body>
 </html>
