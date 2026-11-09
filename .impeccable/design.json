@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T18:28:47.753585+00:00",
+  "title": "Design System: Yapılacaklar",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Uncoated Ground",
+        "tonalRamp": [
+          "#2A292C",
+          "#454447",
+          "#626164",
+          "#828184",
+          "#A3A2A5",
+          "#C5C4C7",
+          "#E2E1E4",
+          "#F5F4F6"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "#16181A",
+          "#2A2D30",
+          "#404347",
+          "#575B60",
+          "#70747A",
+          "#8B8F95",
+          "#A9ACB1",
+          "#C8CACE"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline"
+      },
+      "seal": {
+        "role": "secondary",
+        "displayName": "Seal Periwinkle",
+        "tonalRamp": [
+          "#23254A",
+          "#33366B",
+          "#474B8C",
+          "#5F63A8",
+          "#7E82C0",
+          "#A0A3D6",
+          "#C0C2E8",
+          "#DCDDF3"
+        ]
+      },
+      "alert": {
+        "role": "tertiary",
+        "displayName": "Alert (delete only)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The Yapılacaklar title only."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Task text and messages."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, top bar, form labels, count."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-sheet",
+        "value": "cubic-bezier(.19, 1, .22, 1)",
+        "purpose": "All state changes, 160ms."
+      },
+      {
+        "name": "seal-turn",
+        "value": "rotate 360deg, 25s linear infinite",
+        "purpose": "The seal's text ring; off under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "720px"
+      },
+      {
+        "name": "seal-by-footer",
+        "value": "1040px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Filled ink rectangle for the main action (Ekle, Giriş yap, Onayla).",
+      "html": "<button class=\"ds-btn\">Ekle</button>",
+      "css": ".ds-btn{height:44px;padding:0 26px;border:1px solid #16181A;background:#16181A;color:#F5F4F6;font:500 12px 'Schibsted Grotesk',sans-serif;letter-spacing:.12em;text-transform:uppercase;border-radius:0;white-space:nowrap;cursor:pointer;transition:background .16s cubic-bezier(.19,1,.22,1),color .16s cubic-bezier(.19,1,.22,1)}.ds-btn:hover{background:transparent;color:#16181A}.ds-btn:focus-visible{outline:1px solid #16181A;outline-offset:3px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action (Tamamlananları sil).",
+      "html": "<button class=\"ds-btn-o\">Tamamlananları sil</button>",
+      "css": ".ds-btn-o{height:36px;padding:0 18px;border:1px solid #16181A;background:transparent;color:#16181A;font:500 12px 'Schibsted Grotesk',sans-serif;letter-spacing:.12em;text-transform:uppercase;border-radius:0;white-space:nowrap;cursor:pointer;transition:background .16s,color .16s}.ds-btn-o:hover{background:#16181A;color:#F5F4F6}.ds-btn-o:focus-visible{outline:1px solid #16181A;outline-offset:3px}"
+    },
+    {
+      "name": "Underline Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Text input with a single ink underline.",
+      "html": "<input class=\"ds-field\" placeholder=\"Yeni görev ekle…\">",
+      "css": ".ds-field{width:280px;border:0;border-bottom:1px solid #16181A;border-radius:0;background:transparent;padding:10px 0;font:400 18px 'Schibsted Grotesk',sans-serif;color:#16181A;outline:none;transition:box-shadow .16s}.ds-field::placeholder{color:#4A4D52}.ds-field:focus{box-shadow:0 1px 0 0 #16181A}"
+    },
+    {
+      "name": "Filter Tabs",
+      "kind": "nav",
+      "description": "Text tabs over a hairline; active tab underlined in ink.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"on\">Tümü</button><button>Yapılacak</button><button>Tamamlanan</button></nav>",
+      "css": ".ds-tabs{display:flex;gap:28px;border-bottom:1px solid #C9C7C4;font:400 14px 'Schibsted Grotesk',sans-serif}.ds-tabs button{background:none;border:0;padding:0 0 10px;margin-bottom:-1px;border-bottom:1px solid transparent;color:#4A4D52;cursor:pointer}.ds-tabs button:hover{color:#16181A}.ds-tabs button.on{color:#16181A;border-bottom-color:#16181A}"
+    },
+    {
+      "name": "Task Row",
+      "kind": "custom",
+      "description": "Square checkbox, text, delete; hairline divider; done rows struck in Ink 2.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-cb on\"></span><span class=\"ds-t\">Eczaneden vitamin al</span></div><div class=\"ds-row\"><span class=\"ds-cb\"></span><span>Annemi ara</span></div>",
+      "css": ".ds-row{display:flex;align-items:center;gap:16px;min-height:48px;border-bottom:1px solid #C9C7C4;font:400 17px 'Schibsted Grotesk',sans-serif;color:#16181A}.ds-cb{width:18px;height:18px;border:1px solid #16181A;box-sizing:border-box}.ds-cb.on{background:#16181A}.ds-cb.on+.ds-t{color:#4A4D52;text-decoration:line-through;text-decoration-thickness:1px}"
+    },
+    {
+      "name": "Seal",
+      "kind": "custom",
+      "description": "Periwinkle disc showing tasks left; text ring turns slowly.",
+      "html": "<svg class=\"ds-seal\" viewBox=\"0 0 120 120\"><defs><path id=\"ds-r\" d=\"M60 60m-47 0a47 47 0 1 1 94 0a47 47 0 1 1 -94 0\"/></defs><circle cx=\"60\" cy=\"60\" r=\"60\" fill=\"#DCDDF3\"/><circle cx=\"60\" cy=\"60\" r=\"36\" fill=\"none\" stroke=\"#16181A\" opacity=\".35\"/><g class=\"ds-ring\"><text font-size=\"8.6\" letter-spacing=\"1.6\" fill=\"#16181A\"><textPath href=\"#ds-r\">YAPILACAKLAR · 9 KASIM 2026 · YAPILACAKLAR ·</textPath></text></g><text x=\"60\" y=\"63\" text-anchor=\"middle\" font-size=\"30\" fill=\"#16181A\">4</text><text x=\"60\" y=\"78\" text-anchor=\"middle\" font-size=\"9.5\" fill=\"#16181A\">görev kaldı</text></svg>",
+      "css": ".ds-seal{width:120px;height:120px;font-family:'Schibsted Grotesk',sans-serif}.ds-ring{transform-origin:60px 60px;animation:ds-turn 25s linear infinite}@keyframes ds-turn{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){.ds-ring{animation:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Proof Sheet",
+    "overview": "The list is printed, not rendered: one near-white plate on uncoated stock, framed by registration crosshairs, divided by 1px hairlines, set in a single grotesque. It refuses the category default of a soft rounded card floating on grey with a blue accent. The page is an Operate surface: someone opens it, adds or ticks a task in seconds, and leaves. The world only lends type, palette, density and one signature move (the seal); layout and controls stay the ones everybody already knows.",
+    "keyCharacteristics": [
+      "One sheet, one typeface, one accent.",
+      "Hairlines do all the dividing; there are no cards, panels or shadows.",
+      "Square corners everywhere.",
+      "The periwinkle seal is the only ornament and it carries real information (tasks left).",
+      "A dark variant prints the same sheet in reverse."
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Periwinkle belongs to the seal (and selection). No accent buttons, badges or highlights.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Is For Deleting Rule",
+        "body": "The alert colour appears only on the delete control when hovered.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Tabular figures only on counts (the footer count and the seal number), never on running text, where they put gaps around punctuation.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do keep one typeface and let size and the caps label style carry the hierarchy.",
+      "Do divide with 1px hairlines and leave the rest empty.",
+      "Do keep corners square.",
+      "Do use one easing curve, `cubic-bezier(.19, 1, .22, 1)`, at 160ms for state changes.",
+      "Do test new text at 375px; long task names wrap and must never push the layout sideways."
+    ],
+    "donts": [
+      "Don't add cards, panels, rounded corners or shadows.",
+      "Don't introduce a second accent colour or use periwinkle for buttons.",
+      "Don't add ornament beyond the crosshairs and the seal (no dot patterns, stamps or textures).",
+      "Don't use pure black or flat neutral grey; take secondary text from Ink 2.",
+      "Don't add labels above the title."
+    ]
+  }
+}
